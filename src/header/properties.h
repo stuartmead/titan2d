@@ -8,11 +8,11 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Author: 
- * Description: 
+ * Author:
+ * Description:
  *
  *******************************************************************
- * $Id: properties.h 233 2012-03-27 18:30:40Z dkumar $ 
+ * $Id: properties.h 233 2012-03-27 18:30:40Z dkumar $
  */
 
 #ifndef MAX_DEPTH_MAP
@@ -170,14 +170,14 @@ inline void TiScale::print0(int spaces)
 }
 
 
-//! LHS stands for Latin Hypercube Sampling, it is a constrained sampling method whose convergence can be much faster than monte carlo 
+//! LHS stands for Latin Hypercube Sampling, it is a constrained sampling method whose convergence can be much faster than monte carlo
 struct LHS_Props
 {
-    
-    //! the refinement number, the number of times each of the original intervals have been subdivided into 2 intervals in each direction 
+
+    //! the refinement number, the number of times each of the original intervals have been subdivided into 2 intervals in each direction
     int refnum;
 
-    //! the unique identifier for each sample run 
+    //! the unique identifier for each sample run
     int runid;
 
     //! this constructor initializes refnum and runid to -1
@@ -193,12 +193,12 @@ struct LHS_Props
 
 
 
-//! the PileProps structure holds the pile properties read in in Read_data() so the pile can be placed at the proper locations shortly thereafter in init_piles() 
+//! the PileProps structure holds the pile properties read in in Read_data() so the pile can be placed at the proper locations shortly thereafter in init_piles()
 class PileProps
 {
 public:
     //!pile types on change don't forget to update H5::EnumType datatypePileType
-    enum PileType {PARABALOID=1, CYLINDER=2,PLANE=3,CASITA=4,POPO=5,ID1=6,ID2=7 };
+    enum PileType {PARABALOID=1, CYLINDER=2,PLANE=3,CASITA=4,POPO=5,ID1=6,ID2=7,RASTER=8 };
     //! the number of piles
     int numpiles;
 
@@ -691,7 +691,7 @@ public:
         gamma = 1.0;
         Vslump = 0.0;
         //frict_tiny = 0.1;
-        
+
         //something somewhere counting from 1, so add dummy values
         matnames.push_back("nothing");
         bedfrict.push_back(12.0);
@@ -819,7 +819,7 @@ public:
 //! number of cells in the x direction on the map
     int Nx;
 
-    //! number of cells in the y direction on the map 
+    //! number of cells in the y direction on the map
     int Ny;
 
     //!2d elements accessed as a[ix+iy*stride]
@@ -867,15 +867,15 @@ public:
 
     //! this is the OutLine constructor it initializes the number of cells to zero
     OutLine();
-    
+
     //! this is the OutLine it deallocates the 2 dimensional array holding maximum throughout time pileheight in every cell on the map
     ~OutLine();
-    
+
     void setElemNodeTable(ElementsHashTable* _ElemTable, NodeHashTable* _NodeTable);
 
-    //! this function initializes the OutLine map/2-dimensional array 
+    //! this function initializes the OutLine map/2-dimensional array
     void init(const double *dxy, int power, double *XRange, double *YRange);
-    
+
     //! this function initializes the OutLine map/2-dimensional array
     void init_DEM_resolution(double resx, double resy, double *XRange, double *YRange);
 
@@ -889,10 +889,10 @@ public:
      *  to the file pileheightrecord.xxxxxx
      */
     void output(MatProps* matprops_ptr, StatProps* statprops_ptr);
-    
+
     //! this function reads in the previous map of maximum throughout time pileheight stored in the file pileheightrecord.xxxxxx during restart
     void reload(MatProps* matprops_ptr, StatProps* statprops_ptr);
-    
+
     void combine_results_from_threads();
 
     //! Dump object content to hdf5 file
@@ -961,7 +961,7 @@ public:
         num_planes = 0;
         return;
     }
-    
+
     //! this destructor deallocates the planes information
     ~DischargePlanes()
     {
@@ -1003,12 +1003,12 @@ public:
         num_planes = planes.size();
         calculateDerivativeProps(num_planes - 1);
     }
-    
+
     //reinitialized in load_run()
     void init(int num_planes_in, double **planes_in)
     {
         double planestemp[4];
-        
+
         //printf("num_planes_in=%d   num_planes=%d\n",num_planes_in,num_planes);
         allocate(0);
         //printf("num_planes_in=%d   num_planes=%d\n",num_planes_in,num_planes);
@@ -1056,12 +1056,12 @@ public:
             printf("Discharge planes:    there is no discharge planes\n");
         }
     }
-    
+
     //! this function updates the flux through the discharge planes
     void update(const double nodes[9][2], const double hVx, const double hVy, const double dt)
     {
         //FILE* fp=fopen("dischargedebug","a");
-        
+
         double doubleswap1, doubleswap2, doubleswap3;
         double nearestpoint[2], intersectpoint[2][2];
         int iplane, iintersect, icorner1, icorner2;
@@ -1073,14 +1073,14 @@ public:
                 * 0.25;
         double halfsidelength2 = halfsidelength * halfsidelength;
         double err = halfsidelength / pow(2.0, 19.0);
-        
+
         for(icorner1 = 0; icorner1 < 4; icorner1++)
         {
             icorner2 = (icorner1 + 1) % 4;
             dxnode[icorner1] = nodes[icorner2][0] - nodes[icorner1][0];
             dynode[icorner1] = nodes[icorner2][1] - nodes[icorner1][1];
         }
-        
+
         for(iplane = 0; iplane < num_planes; iplane++)
         {
             /* nearest x & y along line (not necessaryly on line segment) a and b
@@ -1096,10 +1096,10 @@ public:
                     / planes[iplane][6];
             nearestpoint[1] = (+planes[iplane][4] * planes[iplane][7] + planes[iplane][5] * doubleswap1)
                     / planes[iplane][6];
-            
+
             dist2nearest2 = (nodes[8][0] - nearestpoint[0]) * (nodes[8][0] - nearestpoint[0])
                     + (nodes[8][1] - nearestpoint[1]) * (nodes[8][1] - nearestpoint[1]);
-            
+
             //check if line interesects with cell (not counting a single corner)
             if(dist2nearest2 < halfsidelength2 * planes[iplane][8])
             {
@@ -1108,24 +1108,24 @@ public:
                  */
 
                 //it does intersect... if not terminated by endpoints
-                iintersect = 0; //stop when you have 2 unique "intersections" 
-                //(the end of a discharge plane line segment is considered to 
+                iintersect = 0; //stop when you have 2 unique "intersections"
+                //(the end of a discharge plane line segment is considered to
                 //be an "intersection")
                 for(icorner1 = 0; icorner1 < 4; icorner1++)
                 {
                     doubleswap1 = nodes[icorner1][1] * dxnode[icorner1] - nodes[icorner1][0] * dynode[icorner1];
                     doubleswap2 = dxnode[icorner1] * planes[iplane][5] - dynode[icorner1] * planes[iplane][4];
-                    
+
                     if((doubleswap2 < 0) || (doubleswap2 > 0))
                     {
-                        
+
                         intersectpoint[iintersect][0] = (planes[iplane][4] * doubleswap1
                                 - dxnode[icorner1] * planes[iplane][7])
                                                         / doubleswap2;
                         intersectpoint[iintersect][1] = (planes[iplane][5] * doubleswap1
                                 - dynode[icorner1] * planes[iplane][7])
                                                         / doubleswap2;
-                        
+
                         int ifprint = 0;
                         if(((intersectpoint[iintersect][0] < planes[iplane][0] - err) && (planes[iplane][0]
                                 < planes[iplane][1]))
@@ -1151,7 +1151,7 @@ public:
                             intersectpoint[iintersect][0] = planes[iplane][1];
                             intersectpoint[iintersect][1] = planes[iplane][3];
                         }
-                        
+
                         if(((((intersectpoint[iintersect][0] - intersectpoint[0][0]) * (intersectpoint[iintersect][0]
                                 - intersectpoint[0][0])
                               + (intersectpoint[iintersect][1] - intersectpoint[0][1]) * (intersectpoint[iintersect][1]
@@ -1160,10 +1160,10 @@ public:
                             || (iintersect == 0))
                            && (doubleswap2 != 0.0))
                             iintersect++;
-                        
+
                         if(iintersect == 2)
                         {
-                            
+
                             if((intersectpoint[1][0] - intersectpoint[0][0]) * (planes[iplane][1] - planes[iplane][0]) + (intersectpoint[1][1]
                                     - intersectpoint[0][1])
                                                                                                                          * (planes[iplane][3] - planes[iplane][2])
@@ -1176,26 +1176,26 @@ public:
                                 intersectpoint[0][1] = intersectpoint[1][1];
                                 intersectpoint[1][1] = doubleswap3;
                             }
-                            
+
                             break; //we've got both intersection points
                         }
                     }
-                } // for(icorner1=0;icorner1<4;icorner1++)	 
-                
+                } // for(icorner1=0;icorner1<4;icorner1++)
+
                 if(iintersect == 1)
                 {
                     //a plane end point is in this cell
-                    
+
                     doubleswap1 = //dist from center node to 1st plane endpoint
                             (nodes[8][0] - planes[iplane][0]) * (nodes[8][0] - planes[iplane][0]) + (nodes[8][1]
                                     - planes[iplane][2])
                                                                                                     * (nodes[8][1] - planes[iplane][2]);
-                    
+
                     doubleswap2 = //dist from center node to 2nd plane endpoint
                             (nodes[8][0] - planes[iplane][1]) * (nodes[8][0] - planes[iplane][1]) + (nodes[8][1]
                                     - planes[iplane][3])
                                                                                                     * (nodes[8][1] - planes[iplane][3]);
-                    
+
                     if(doubleswap1 <= doubleswap2)
                     { //it's the 1st end point
                         intersectpoint[1][0] = planes[iplane][0];
@@ -1206,26 +1206,26 @@ public:
                         intersectpoint[1][0] = planes[iplane][1];
                         intersectpoint[1][1] = planes[iplane][3];
                     }
-                    
+
                     iintersect = 2; //we consider plane end point to be an "intersection"
                 }
-                
+
                 if(iintersect == 2)
                 {
-                    
+
                     //discharge += dt*(hVx*dy-hVy*dx)
                     planes[iplane][9] += dt
                             * (hVx * (intersectpoint[1][1] - intersectpoint[0][1]) - hVy
                                     * (intersectpoint[1][0] - intersectpoint[0][0]));
                 } // if(iintersect==2)
-                
+
             } //if(halfsidelength*(absdy+absdx)>=absdx*absdx+absdy*absdy)
-            
+
         } //for(iplane=0;iplane<num_planes;iplane++)
-        
+
         return;
     }
-    
+
     //! this function deallocates the array holding the information about the discharge planes
     void dealloc()
     {

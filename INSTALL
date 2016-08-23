@@ -107,6 +107,12 @@ cd titan2d
 # Execute following in top source directory:
 aclocal;autoheader;autoconf;automake --add-missing --copy
 
+#SRM ubuntu install steps:
+autoreconf --install
+configure
+make -j
+make install
+
 # Now you need to configure the installation. Titan2D support out of 
 # source compilation. Execute configure in building directory, for
 # example:

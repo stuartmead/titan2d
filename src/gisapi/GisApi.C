@@ -848,7 +848,6 @@ int Get_raster_id(double resolution, double x, double y, int* category_id)
 int Get_elevation(double resolution, double x, double y, double& elev)
 {
     int status;
-    
     if(gis_grid.elev == 0)
     {
         status = load_GIS_data();
@@ -871,6 +870,27 @@ int Get_elevation(double resolution, double x, double y, double& elev)
         else
             elev = interpolate_bilinear_at(gis_grid.ghead.resolution, x, y, gis_grid.elev);
         //		*elev = gis_grid.elev[row][col];
+    }
+    return 0;
+}
+
+int Get_pile_elevation(double resolution, double x, double y, double& elev, Gis_Grid grid)
+{
+    if(x >= grid.ghead.xmin && x <= grid.ghead.xmax && y >= grid.ghead.ymin && y <= grid.ghead.ymax)
+    {
+        x = (x - grid.ghead.xmin) / grid.ghead.resolution;
+        y = (grid.ghead.ymax - y) / grid.ghead.resolution;
+        if((int) y >= grid.ghead.nrows - 1 || (int) x >= grid.ghead.ncols - 1)
+        {
+            if((int) y >= grid.ghead.nrows - 1)
+                y = grid.ghead.nrows - 1;
+            if((int) x >= grid.ghead.ncols - 1)
+                x = grid.ghead.ncols - 1;
+            elev = grid.elev[(int) y][(int) x];
+        }
+        else
+            elev = interpolate_bilinear_at(grid.ghead.resolution, x, y, grid.elev);
+        //		*elev = grid.elev[row][col];
     }
     return 0;
 }

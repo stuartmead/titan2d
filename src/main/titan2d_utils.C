@@ -62,6 +62,8 @@ void init_TiH5()
     datatypePileType.insert("ID1",&pile_type);
     pile_type=PileProps::ID2;
     datatypePileType.insert("ID2",&pile_type);
+    pile_type=PileProps::RASTER;
+    datatypePileType.insert("RASTER", &pile_type);
 
     datatypeOutLineInitSize=H5::EnumType(sizeof(OutLine::OutLineInitSize));
     OutLine::OutLineInitSize init_size;

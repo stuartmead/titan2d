@@ -8,28 +8,36 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Author: 
- * Description: 
+ * Author:
+ * Description:
  *
  *******************************************************************
- * $Id: init_piles.C 229 2012-02-26 22:11:07Z dkumar $ 
+ * $Id: init_piles.C 229 2012-02-26 22:11:07Z dkumar $
  */
 
 #ifdef HAVE_CONFIG_H
 # include <titan_config.h>
 #endif
 
+#include <string>
+
 #include "../header/hpfem.h"
 
 #include "../header/titan_simulation.h"
+
+#include "../gisapi/GisApi.h"
+#include "../gisapi/gmfg_GdalApi.h"
+
+//FOR TESTING - putting string in here
+std::string rasterPile ("/rfdata1/stuart/Mangatoetoenui_Haz/rasterpile.tif");
 
 int get_elem_elev(NodeHashTable *HT_Node_Ptr, MatProps *matprops, Element *EmTemp, double &elevation);
 
 void print_grid(ElementsHashTable* HT_Elem_Ptr, NodeHashTable* HT_Node_Ptr, MatProps* matprops)
 {
-    
+
     FILE *fp = fopen("gridplot00.txt", "w");
-    
+
     int no_of_buckets = HT_Elem_Ptr->get_no_of_buckets();
     vector<HashEntryLine> &bucket=HT_Elem_Ptr->bucket;
     tivector<Element> &elenode_=HT_Elem_Ptr->elenode_;
@@ -40,22 +48,22 @@ void print_grid(ElementsHashTable* HT_Elem_Ptr, NodeHashTable* HT_Node_Ptr, MatP
         for(int ielm = 0; ielm < bucket[ibuck].ndx.size(); ielm++)
         {
             Element *EmTemp = &(elenode_[bucket[ibuck].ndx[ielm]]);
-            
+
             if(EmTemp->adapted_flag() > 0)
             {
                 double elevation;
                 get_elem_elev(HT_Node_Ptr, matprops, EmTemp, elevation);
-                
+
                 fprintf(fp, "%20.14g %20.14g %20.14g\n", (EmTemp->coord(0)) * (matprops)->scale.length,
                         (EmTemp->coord(1)) * (matprops)->scale.length, elevation);
             }
         }
     }
-    
+
     fclose(fp);
-    
+
     assert(0);
-    
+
     return;
 }
 
@@ -74,11 +82,11 @@ void cxxTitanSimulation::init_piles()
     PileProps* pileprops_ptr=get_pileprops();
 
     unsigned nodes[9][KEYLENGTH], *node_key;
-    
+
     int no_of_buckets = HT_Elem_Ptr->get_no_of_buckets();
     vector<HashEntryLine> &bucket=HT_Elem_Ptr->bucket;
     tivector<Element> &elenode_=HT_Elem_Ptr->elenode_;
-    
+
 
     PileProps::PileType pile_type= pileprops_ptr->get_default_piletype();
 
@@ -103,13 +111,42 @@ void cxxTitanSimulation::init_piles()
     {
         printf("It seems this type of piles have hardcoded coordinates\n");
         assert(0);
+        if (pile_type == PileProps::RASTER)
+        {
+        Gis_Grid pilegrid;
+        Initialize_GDAL_data_grid(rasterPile.c_str(), pilegrid);
+        load_GDAL_data_grid(pilegrid);
         //@ElementsBucketDoubleLoop
         for(int ibuck = 0; ibuck < no_of_buckets; ibuck++)
         {
             for(int ielm = 0; ielm < bucket[ibuck].ndx.size(); ielm++)
             {
                 Element *EmTemp = &(elenode_[bucket[ibuck].ndx[ielm]]);
-                
+
+                if(EmTemp->adapted_flag() > 0)
+                {
+                    //put in the pile height right here...
+                    double pile_height = 0.0;
+                    Get_pile_elevation(pilegrid.ghead.resolution, EmTemp->coord(0), EmTemp->coord(1), pile_height, pilegrid);
+                   //Insert raster value
+                   //Just to be safe
+                   if (pile_height < 0.0){pile_height = 0.0;}
+                   EmTemp->put_height(pile_height);
+
+                }
+            }
+        }
+        }
+        else
+        {
+        //If not a raster do this loop.
+        //@ElementsBucketDoubleLoop
+        for(int ibuck = 0; ibuck < no_of_buckets; ibuck++)
+        {
+            for(int ielm = 0; ielm < bucket[ibuck].ndx.size(); ielm++)
+            {
+                Element *EmTemp = &(elenode_[bucket[ibuck].ndx[ielm]]);
+
                 if(EmTemp->adapted_flag() > 0)
                 {
                     //put in the pile height right here...
@@ -163,23 +200,24 @@ void cxxTitanSimulation::init_piles()
             }
         }
     } //end "#if defined PARABALOID || defined CYLINDER"
+    } //end "#if raster"
     move_data(numprocs, myid, HT_Elem_Ptr, HT_Node_Ptr, timeprops_ptr);
-    
+
     //update temporary arrays of elements/nodes pointers
     HT_Node_Ptr->flushNodeTable();
     HT_Elem_Ptr->flushElemTable();
     HT_Elem_Ptr->updateLocalElements();
     HT_Elem_Ptr->updateNeighboursIndexes();
-    
+
     slopes(HT_Elem_Ptr, HT_Node_Ptr, matprops_ptr);
-    
+
     /* initial calculation of actual volume on the map */
 
     double realvolume = 0.0, depositedvol = 0.0, forcebed = 0.0, meanslope = 0.0;
     double epsilon[DIMENSION];
     for(i=0;i<DIMENSION;i++)
         epsilon[i]=matprops_ptr->scale.epsilon;
-    
+
     //@ElementsBucketDoubleLoop
     for(int ibuck = 0; ibuck < no_of_buckets; ibuck++)
     {
@@ -208,7 +246,7 @@ void cxxTitanSimulation::init_piles()
             }
         }
     }
-    
+
     double tempin[3], tempout[3];
     tempin[0] = realvolume;
     tempin[1] = forcebed;
@@ -218,16 +256,16 @@ void cxxTitanSimulation::init_piles()
 #else //USE_MPI
     for(int i9=0;i9<3;++i9)tempout[i9]=tempin[i9];
 #endif //USE_MPI
-    
+
     statprops_ptr->realvolume = tempout[0] * (matprops_ptr->scale.height) * (matprops_ptr->scale.length) * (matprops_ptr->scale.length);
     statprops_ptr->outflowvol = 0.0;
     statprops_ptr->erodedvol = 0.0;
     statprops_ptr->depositedvol = tempout[2] * (matprops_ptr->scale.height) * (matprops_ptr->scale.length)
                               * (matprops_ptr->scale.length);
-    
+
     statprops_ptr->forceint = 0.0;
     statprops_ptr->forcebed = tempout[1] / tempout[0];
-    
+
     return;
 }
 

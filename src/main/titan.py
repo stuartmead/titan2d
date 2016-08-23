@@ -261,11 +261,12 @@ class TitanSimulationBase(object):
     possible_pile_types={
          'Paraboloid':PileProps.PARABALOID,
          'Cylinder':PileProps.CYLINDER,
-         #'PLANE':PileProps.PLANE,
-         #'CASITA':PileProps.CASITA,
-         #'POPO':PileProps.POPO,
-         #'ID1':PileProps.ID1,
-         #'ID2':PileProps.ID2
+         'PLANE':PileProps.PLANE,
+         'CASITA':PileProps.CASITA,
+         'POPO':PileProps.POPO,
+         'ID1':PileProps.ID1,
+         'ID2':PileProps.ID2i,
+         'RASTER':PileProps.RASTER
     }
     #defaultParameters can be removed
     possible_internal_mat_models={
