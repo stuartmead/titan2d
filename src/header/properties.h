@@ -262,7 +262,10 @@ public:
     virtual void print_pile(int i);
     virtual void print0();
     virtual PileProps::PileType get_default_piletype(){return CYLINDER;}
-
+    virtual std::string get_file_in(int i)
+    {
+        return " ";
+    }
     //! Dump object content to hdf5 file
     virtual void h5write(H5::CommonFG *parent, string group_name="PileProps") const;
     //! Load object content from hdf5 file
@@ -301,11 +304,54 @@ public:
     {
         return PARABALOID;
     }
+    virtual std::string get_file_in(int i)
+    {
+       return " ";
+    }
     //! Dump object content to hdf5 file
     virtual void h5write(H5::CommonFG *parent, string group_name="PileProps") const;
     //! Load object content from hdf5 file
     virtual void h5read(const H5::CommonFG *parent, const  string group_name="PileProps");
 };
+
+//! the PilePropsRaster is PileProps for TwoPhase Raster
+class PilePropsRaster: public PilePropsTwoPhases
+{
+public:
+    //! array of volume -fractions
+    std::vector<double> vol_fract;
+    //! array of rasters
+    std::vector<std::string> raster_files;
+
+    PilePropsRaster();
+    virtual ~PilePropsRaster();
+
+    virtual void allocpiles(int numpiles_in);
+#ifndef SWIG
+    virtual void addPile(double hight, double xcenter, double ycenter, double majradius, double minradius,
+                         double orientation, double Vmagnitude, double Vdirection, PileProps::PileType m_pile_type);
+#endif
+    virtual void addPile(double hight, double xcenter, double ycenter, double majradius, double minradius,
+                         double orientation, double Vmagnitude, double Vdirection, PileProps::PileType m_pile_type,
+                         double volfract, const std::string raster_in);
+    virtual void print_pile(int i);
+    /**
+     * assign height to point of an elliptical (in (x,y)) shaped pile,
+     * the pile can be either parabolic (in the z direction) or be
+     * cylindrical (have uniform pile height)
+     */
+    virtual void set_element_height_to_elliptical_pile_height(NodeHashTable* HT_Node_Ptr, Element *EmTemp, MatProps* matprops);
+    virtual PileProps::PileType get_default_piletype()
+    {
+        return RASTER;
+    }
+    virtual std::string get_file_in(int i);
+    //! Dump object content to hdf5 file
+    virtual void h5write(H5::CommonFG *parent, string group_name="PileProps") const;
+    //! Load object content from hdf5 file
+    virtual void h5read(const H5::CommonFG *parent, const  string group_name="PileProps");
+};
+
 
 /*************************************************************************/
 /* the gis map properties                                                */

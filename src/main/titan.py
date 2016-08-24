@@ -265,7 +265,7 @@ class TitanSimulationBase(object):
          'CASITA':PileProps.CASITA,
          'POPO':PileProps.POPO,
          'ID1':PileProps.ID1,
-         'ID2':PileProps.ID2i,
+         'ID2':PileProps.ID2,
          'RASTER':PileProps.RASTER
     }
     #defaultParameters can be removed
@@ -598,15 +598,15 @@ class TitanSimulationBase(object):
         self.chk_Pile=TiArgCheckerAndSetter(
             sectionName="addPile",
             levelZeroParameters={
-                'height':{'desc':'',
-                    'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk
-                },                
-                'center':{'desc':'',
-                    'validator':VarTypeTuple(float,N=2).chk
-                },
-                'radii':{'desc':'',
-                    'validator':VarTypeTuple(float,N=2).chk
-                },
+#                'height':{'desc':'',
+#                    'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk
+#                },                
+#                'center':{'desc':'',
+#                    'validator':VarTypeTuple(float,N=2).chk
+#                },
+#                'radii':{'desc':'',
+#                    'validator':VarTypeTuple(float,N=2).chk
+#                },
                 'orientation':{'desc':'',
                     'validator':VarType(float).chk
                 }, 
@@ -623,11 +623,14 @@ class TitanSimulationBase(object):
                     'validator':VarType(float,conditions=[
                         {'f':lambda v: v >= 0.0,'msg':'should be >=0.0 and <=1.0!'},
                         {'f':lambda v: v <=1.0,'msg':'should be >=0.0 and <=1.0!'}]).chk
-                },           
+                },
+                'rasterfile':{'desc':'',
+                    'validator':VarTypeString
+                },
                 
             },
             defaultParameters={'orientation':0.0,'Vmagnitude':0.0,'Vdirection':0.0,'pile_type':'Cylinder',},
-            optionalParameters=['vol_fract']
+            optionalParameters=['vol_fract','rasterfile']
         )
         #addFluxSource
         self.ui_FluxSource=[]
@@ -1069,9 +1072,13 @@ class TitanSimulation(TitanSimulationBase):
                 self.sim.set_pileprops(self.pileprops)
         elif self.sim.get_element_type()==ElementType_TwoPhases:
             if self.pileprops==None:
-                self.pileprops=PilePropsTwoPhases()
+                self.pileprops=PilePropsRaster()
                 self.pileprops.thisown=0
-                self.sim.set_pileprops(self.pileprops)
+                self.sim.set_pileprops(self.pileprops) 
+#            elif self.pileprops==8:
+#                self.pileprops=PilePropsTwoPhases()
+#                self.pileprops.thisown=0
+#                self.sim.set_pileprops(self.pileprops)
         else:
             raise ValueError("Unknown element type")
         
@@ -1095,8 +1102,13 @@ class TitanSimulation(TitanSimulationBase):
                     raise ValueError("Can not mix element type for piles!")
                 
                 if pile!=None:
-                    self.pileprops.addPile(pile['height'], pile['center'][0], pile['center'][1], pile['radii'][0], 
-                        pile['radii'][1], pile['orientation'], pile['Vmagnitude'], pile['Vdirection'],pile['pile_type'],pile['vol_fract'])
+                    if pile['pile_type']!=8:
+                        #raise ValueError("Pile type is"+str(pile['pile_type']))
+                        self.pileprops.addPile(pile['height'], pile['center'][0], pile['center'][1], pile['radii'][0], 
+                            pile['radii'][1], pile['orientation'], pile['Vmagnitude'], pile['Vdirection'],pile['pile_type'],pile['vol_fract'])
+                    else:
+                        self.pileprops.addPile(0.0, 0.0, 0.0, 0.0,
+                            0.0, 0.0, pile['Vmagnitude'], pile['Vdirection'], pile['pile_type'], pile['vol_fract'], pile['rasterfile'])
             else:
                 raise ValueError("Unknown element type")
         #######################################################################

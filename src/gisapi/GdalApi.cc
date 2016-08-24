@@ -148,7 +148,7 @@ Initialize_GDAL_data_grid(const char *fullGispath, Gis_Grid grid)
 
     // Initialize GDAL
     GDALAllRegister();
-
+    printf("Reading gdal raster grid from %s\n", fullGispath);
     // open GIS dataset
     dataset = (GDALDataset *) GDALOpen(fullGispath, GA_ReadOnly);
     if(dataset == NULL)
@@ -226,6 +226,7 @@ load_GDAL_data_grid(Gis_Grid grid)
     GDALRasterBand *poBand;
     GDALAllRegister();
     int nrows, ncols;
+    printf("Loading gdal raster grid from %s\n", grid.ghead.datafile);
 
 	GDALDataset *dataset = (GDALDataset *) GDALOpen(grid.ghead.datafile, GA_ReadOnly);
 

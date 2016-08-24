@@ -476,6 +476,74 @@ void PilePropsTwoPhases::h5read(const H5::CommonFG *parent, const  string group_
     H5::Group group(parent->openGroup(group_name));
     TiH5_readDoubleVectorAttribute(group, vol_fract, numpiles);
 }
+
+//Raster pile
+
+PilePropsRaster::PilePropsRaster() :
+        PilePropsTwoPhases()
+{
+}
+PilePropsRaster::~PilePropsRaster()
+{
+}
+
+void PilePropsRaster::allocpiles(int numpiles_in)
+{
+    PileProps::allocpiles(numpiles_in);
+    vol_fract.resize(numpiles);
+    raster_files.resize(numpiles); 
+}
+void PilePropsRaster::addPile(double hight, double xcenter, double ycenter, double majradius, double minradius,
+                                 double orientation, double Vmagnitude, double Vdirection, PileProps::PileType m_pile_type)
+{
+    addPile(hight, xcenter, ycenter, majradius, minradius, orientation, Vmagnitude, Vdirection, m_pile_type, 1.0, "NULL");
+}
+void PilePropsRaster::addPile(double hight, double xcenter, double ycenter, double majradius, double minradius,
+                                 double orientation, double Vmagnitude, double Vdirection, PileProps::PileType m_pile_type, double volfract, const std::string raster_in)
+{
+    PileProps::addPile(hight, xcenter, ycenter, majradius, minradius, orientation, Vmagnitude, Vdirection, m_pile_type);
+    vol_fract.push_back(volfract);
+    raster_files.push_back(raster_in);
+}
+void PilePropsRaster::print_pile(int i)
+{
+    PileProps::print_pile(i);
+    printf("\t\tInitial solid-volume fraction,(0:1.): %f\n", vol_fract[i]);
+    printf("\t\tRaster file name: %s\n",raster_files[i].c_str());
+}
+std::string PilePropsRaster::get_file_in(int i)
+{
+    return raster_files[i];
+}
+void PilePropsRaster::set_element_height_to_elliptical_pile_height(NodeHashTable* HT_Node_Ptr, Element *m_EmTemp, MatProps* matprops)
+{
+    double pileheight;
+    double xmom, ymom;
+    pileheight=get_elliptical_pile_height(HT_Node_Ptr, m_EmTemp, matprops, &xmom,&ymom);
+
+    int ipile;
+    double vfract = 0.;
+    for(ipile = 0; ipile < numpiles; ipile++)
+    {
+        if(vol_fract[ipile] > vfract)
+        vfract = vol_fract[ipile];
+    }
+    m_EmTemp->put_height_mom(pileheight, vfract, xmom, ymom);
+}
+void PilePropsRaster::h5write(H5::CommonFG *parent, string group_name) const
+{
+    PileProps::h5write(parent, group_name);
+    H5::Group group(parent->openGroup(group_name));
+    TiH5_writeStringAttribute__(group,"PilePropsTwoPhases","Type");
+    TiH5_writeDoubleVectorAttribute(group, vol_fract, numpiles);
+}
+void PilePropsRaster::h5read(const H5::CommonFG *parent, const  string group_name)
+{
+    PileProps::h5read(parent, group_name);
+    H5::Group group(parent->openGroup(group_name));
+    TiH5_readDoubleVectorAttribute(group, vol_fract, numpiles);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void FluxProps::h5write(H5::CommonFG *parent, string group_name) const
 {

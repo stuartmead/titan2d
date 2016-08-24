@@ -28,8 +28,6 @@
 #include "../gisapi/GisApi.h"
 #include "../gisapi/gmfg_GdalApi.h"
 
-//FOR TESTING - putting string in here
-std::string rasterPile ("/rfdata1/stuart/Mangatoetoenui_Haz/rasterpile.tif");
 
 int get_elem_elev(NodeHashTable *HT_Node_Ptr, MatProps *matprops, Element *EmTemp, double &elevation);
 
@@ -110,11 +108,13 @@ void cxxTitanSimulation::init_piles()
     else
     {
         printf("It seems this type of piles have hardcoded coordinates\n");
-        assert(0);
+        //assert(0);
         if (pile_type == PileProps::RASTER)
         {
         Gis_Grid pilegrid;
-        Initialize_GDAL_data_grid(rasterPile.c_str(), pilegrid);
+        //Move to the class maybe...
+        printf("Reading raster grid from %s \n", pileprops_ptr->get_file_in(0));
+        Initialize_GDAL_data_grid(pileprops_ptr->get_file_in(0).c_str(), pilegrid);
         load_GDAL_data_grid(pilegrid);
         //@ElementsBucketDoubleLoop
         for(int ibuck = 0; ibuck < no_of_buckets; ibuck++)
