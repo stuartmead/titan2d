@@ -143,6 +143,7 @@ void PileProps::allocpiles(int numpiles_in)
     initialVx.resize(numpiles);
     initialVy.resize(numpiles);
     pile_type.resize(numpiles);
+    pileFile.resize(numpiles);
 }
 
 void PileProps::addPile(double hight, double xcenter, double ycenter, double majradius, double minradius,
@@ -159,6 +160,12 @@ void PileProps::addPile(double hight, double xcenter, double ycenter, double maj
     initialVx.push_back(Vmagnitude * cos(Vdirection * PI / 180.0));
     initialVy.push_back(Vmagnitude * sin(Vdirection * PI / 180.0));
     pile_type.push_back(m_pile_type);
+}
+
+void PileProps::addPileFile(std::string fileLoc)
+{
+    printf("\t\tPile height raster file is %s\n", fileLoc);
+    pileFile.push_back(fileLoc);
 }
 
 void PileProps::scale(double m_length_scale, double m_height_scale, double m_gravity_scale)
@@ -209,6 +216,8 @@ void PileProps::print_pile(int i)
     printf("\t\tInitial direction ([degrees] from X axis): %f\n", Vdirection);
     printf("\t\tPile type: %d\n", pile_type[i]);
     printf("\t\tPile volume [m^3]: %f\n", get_volume(i) * height_scale * length_scale * length_scale);
+    if (pileFile.size()>0)
+        printf("\t\tPile file: %s\n", pileFile.at(i));
 }
 void PileProps::print0()
 {
@@ -290,6 +299,10 @@ double PileProps::get_elliptical_pile_height(NodeHashTable* HT_Node_Ptr, Element
                     height = pileheight[ipile];
                 else
                     height = 0.0;
+            }
+            else if(pile_type[ipile] == PileProps::RASTER)
+            {
+                height = pileheight[ipile] * (1. - major * major - minor * minor);
             }
             else
             {
@@ -443,6 +456,12 @@ void PilePropsTwoPhases::addPile(double hight, double xcenter, double ycenter, d
     PileProps::addPile(hight, xcenter, ycenter, majradius, minradius, orientation, Vmagnitude, Vdirection, m_pile_type);
     vol_fract.push_back(volfract);
 }
+void PilePropsTwoPhases::addPileFile(std::string fileLoc)
+{
+    //PileProps::addPileFile(fileLoc);
+    printf("\t\tPile height raster file is %s\n", fileLoc);
+    pileFile.push_back(fileLoc);
+}
 void PilePropsTwoPhases::print_pile(int i)
 {
     PileProps::print_pile(i);
@@ -471,73 +490,6 @@ void PilePropsTwoPhases::h5write(H5::CommonFG *parent, string group_name) const
     TiH5_writeDoubleVectorAttribute(group, vol_fract, numpiles);
 }
 void PilePropsTwoPhases::h5read(const H5::CommonFG *parent, const  string group_name)
-{
-    PileProps::h5read(parent, group_name);
-    H5::Group group(parent->openGroup(group_name));
-    TiH5_readDoubleVectorAttribute(group, vol_fract, numpiles);
-}
-
-//Raster pile
-
-PilePropsRaster::PilePropsRaster() :
-        PilePropsTwoPhases()
-{
-}
-PilePropsRaster::~PilePropsRaster()
-{
-}
-
-void PilePropsRaster::allocpiles(int numpiles_in)
-{
-    PileProps::allocpiles(numpiles_in);
-    vol_fract.resize(numpiles);
-    raster_files.resize(numpiles); 
-}
-void PilePropsRaster::addPile(double hight, double xcenter, double ycenter, double majradius, double minradius,
-                                 double orientation, double Vmagnitude, double Vdirection, PileProps::PileType m_pile_type)
-{
-    addPile(hight, xcenter, ycenter, majradius, minradius, orientation, Vmagnitude, Vdirection, m_pile_type, 1.0, "NULL");
-}
-void PilePropsRaster::addPile(double hight, double xcenter, double ycenter, double majradius, double minradius,
-                                 double orientation, double Vmagnitude, double Vdirection, PileProps::PileType m_pile_type, double volfract, const std::string raster_in)
-{
-    PileProps::addPile(hight, xcenter, ycenter, majradius, minradius, orientation, Vmagnitude, Vdirection, m_pile_type);
-    vol_fract.push_back(volfract);
-    raster_files.push_back(raster_in);
-}
-void PilePropsRaster::print_pile(int i)
-{
-    PileProps::print_pile(i);
-    printf("\t\tInitial solid-volume fraction,(0:1.): %f\n", vol_fract[i]);
-    printf("\t\tRaster file name: %s\n",raster_files[i].c_str());
-}
-std::string PilePropsRaster::get_file_in(int i)
-{
-    return raster_files[i];
-}
-void PilePropsRaster::set_element_height_to_elliptical_pile_height(NodeHashTable* HT_Node_Ptr, Element *m_EmTemp, MatProps* matprops)
-{
-    double pileheight;
-    double xmom, ymom;
-    pileheight=get_elliptical_pile_height(HT_Node_Ptr, m_EmTemp, matprops, &xmom,&ymom);
-
-    int ipile;
-    double vfract = 0.;
-    for(ipile = 0; ipile < numpiles; ipile++)
-    {
-        if(vol_fract[ipile] > vfract)
-        vfract = vol_fract[ipile];
-    }
-    m_EmTemp->put_height_mom(pileheight, vfract, xmom, ymom);
-}
-void PilePropsRaster::h5write(H5::CommonFG *parent, string group_name) const
-{
-    PileProps::h5write(parent, group_name);
-    H5::Group group(parent->openGroup(group_name));
-    TiH5_writeStringAttribute__(group,"PilePropsTwoPhases","Type");
-    TiH5_writeDoubleVectorAttribute(group, vol_fract, numpiles);
-}
-void PilePropsRaster::h5read(const H5::CommonFG *parent, const  string group_name)
 {
     PileProps::h5read(parent, group_name);
     H5::Group group(parent->openGroup(group_name));

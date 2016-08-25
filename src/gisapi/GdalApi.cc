@@ -139,7 +139,7 @@ int load_GDAL_data()
 }
 
 int
-Initialize_GDAL_data_grid(const char *fullGispath, Gis_Grid grid)
+Initialize_GDAL_data_grid(std::string fullGispath, Gis_Grid &grid)
 {
     GDALDataset *dataset;
     int nx, ny;
@@ -149,8 +149,9 @@ Initialize_GDAL_data_grid(const char *fullGispath, Gis_Grid grid)
     // Initialize GDAL
     GDALAllRegister();
     printf("Reading gdal raster grid from %s\n", fullGispath);
+    
     // open GIS dataset
-    dataset = (GDALDataset *) GDALOpen(fullGispath, GA_ReadOnly);
+    dataset = (GDALDataset *) GDALOpen(fullGispath.c_str(), GA_ReadOnly);
     if(dataset == NULL)
     {
         cout << "GIS ERROR: Unable to open GIS DATA" << endl;
@@ -190,7 +191,7 @@ Initialize_GDAL_data_grid(const char *fullGispath, Gis_Grid grid)
     }
     gishead.ncols = nx;
     gishead.nrows = ny;
-
+    cout << "Header cols, rows =" << gishead.ncols << ", " << gishead.nrows << endl;
     // read the window information
     if(dataset->GetGeoTransform(adfGeoTransform) == CE_None)
     {
@@ -214,14 +215,14 @@ Initialize_GDAL_data_grid(const char *fullGispath, Gis_Grid grid)
         gishead.Format = GDAL;
         gishead.compressed = 1; // doesn't mean anything if GDAL is being used
         grid.ghead = gishead;
-        grid.ghead.datafile = strdup(fullGispath);
+        //grid.ghead.datafile = strdup(fullGispath.c_str());
         return 0;
     }
     return -4;
 }
 
 int
-load_GDAL_data_grid(Gis_Grid grid)
+load_GDAL_data_grid(Gis_Grid &grid)
 {
     GDALRasterBand *poBand;
     GDALAllRegister();

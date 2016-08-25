@@ -112,10 +112,23 @@ void cxxTitanSimulation::init_piles()
         if (pile_type == PileProps::RASTER)
         {
         Gis_Grid pilegrid;
-        //Move to the class maybe...
-        printf("Reading raster grid from %s \n", pileprops_ptr->get_file_in(0));
-        Initialize_GDAL_data_grid(pileprops_ptr->get_file_in(0).c_str(), pilegrid);
-        load_GDAL_data_grid(pilegrid);
+        //printf("Reading raster grid from %s \n", pileprops_ptr->get_file_in(0).c_str());
+        if(Initialize_GDAL_data_grid(pileprops_ptr->get_file_in(0), pilegrid))
+	{
+            fprintf(stderr, "FATAL ERROR: Failed to initialize raster pile\n");
+            assert(0);
+        }
+        pilegrid.ghead.datafile = strdup(pileprops_ptr->get_file_in(0).c_str());
+        
+        if(load_GDAL_data_grid(pilegrid))
+        {
+            fprintf(stderr, "FATAL ERROR: Failed to load raster pile\n");
+            assert(0);
+        }
+        int overallHt = 0;
+        double lengthScale = matprops_ptr->scale.length;
+        //if(adapt)
+        //    initial_H_adapt(HT_Elem_Ptr, HT_Node_Ptr, 0, matprops_ptr, pileprops_ptr, fluxprops_ptr, timeprops_ptr, 4);
         //@ElementsBucketDoubleLoop
         for(int ibuck = 0; ibuck < no_of_buckets; ibuck++)
         {
@@ -127,15 +140,31 @@ void cxxTitanSimulation::init_piles()
                 {
                     //put in the pile height right here...
                     double pile_height = 0.0;
-                    Get_pile_elevation(pilegrid.ghead.resolution, EmTemp->coord(0), EmTemp->coord(1), pile_height, pilegrid);
+                    if(Get_pile_elevation(pilegrid.ghead.resolution, EmTemp->coord(0)*lengthScale, EmTemp->coord(1)*lengthScale, pile_height, pilegrid))
+                    {
+                        fprintf(stderr, "ERROR: Failed to get grid elevation at x: %d, y: %d\n", EmTemp->coord(0), EmTemp->coord(1));
+                        assert(0);   
+                    } 
+                   /* else
+                    { 
+                         printf("Elevation at x: %.3f, y: %.3f is %.3f\n",EmTemp->coord(0)*matprops_ptr->scale.length, EmTemp->coord(1)*matprops_ptr->scale.length, pile_height);
+                    }
+                    */
                    //Insert raster value
                    //Just to be safe
                    if (pile_height < 0.0){pile_height = 0.0;}
+                   
                    EmTemp->put_height(pile_height);
+                   overallHt++;
 
+                }
+                else
+                {
+                   EmTemp->put_height(0.0);
                 }
             }
         }
+        printf("Overall height cells modified from raster %i\n", overallHt);
         }
         else
         {
