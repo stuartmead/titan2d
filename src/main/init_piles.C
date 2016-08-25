@@ -158,10 +158,6 @@ void cxxTitanSimulation::init_piles()
                    overallHt++;
 
                 }
-                else
-                {
-                   EmTemp->put_height(0.0);
-                }
             }
         }
         printf("Overall height cells modified from raster %i\n", overallHt);

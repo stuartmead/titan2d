@@ -1093,7 +1093,7 @@ class TitanSimulation(TitanSimulationBase):
                 if pile!=None:
                     self.pileprops.addPile(pile['height'], pile['center'][0], pile['center'][1], pile['radii'][0], 
                                            pile['radii'][1], pile['orientation'], pile['Vmagnitude'], pile['Vdirection'],pile['pile_type'])
-                    if pile==8:
+                    if pile['pile_type']==8:
                         self.pileprops.addPileFile(pile['rasterfile'])
 
             elif self.sim.get_element_type()==ElementType_TwoPhases:
