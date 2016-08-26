@@ -68,7 +68,6 @@ void print_grid(ElementsHashTable* HT_Elem_Ptr, NodeHashTable* HT_Node_Ptr, MatP
 
 void cxxTitanSimulation::init_piles()
 {
-
     MatProps* matprops_ptr = get_matprops();
     FluxProps* fluxprops_ptr = get_fluxprops();
     TimeProps* timeprops_ptr = get_timeprops();
@@ -154,7 +153,15 @@ void cxxTitanSimulation::init_piles()
                    //Just to be safe
                    if (pile_height < 0.0){pile_height = 0.0;}
                    
-                   EmTemp->put_height(pile_height);
+                   if (EmTemp->elementType() == ElementType::TwoPhases) {
+                       double xmom, ymom;
+                       pileprops_ptr->get_elliptical_pile_height(HT_Node_Ptr, EmTemp, matprops_ptr, &xmom, &ymom);
+                       EmTemp->put_height_mom(pile_height, static_cast<PilePropsTwoPhases*>(pileprops_ptr)->vol_fract[0], xmom, ymom);
+                   }
+                   else {
+                       EmTemp->put_height(pile_height);
+                   }
+                   
                    overallHt++;
 
                 }
