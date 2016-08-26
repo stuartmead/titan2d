@@ -127,8 +127,8 @@ void cxxTitanSimulation::init_piles()
         }
         int overallHt = 0;
         double lengthScale = matprops_ptr->scale.length;
-        //if(adapt)
-        //    initial_H_adapt(HT_Elem_Ptr, HT_Node_Ptr, 0, matprops_ptr, pileprops_ptr, fluxprops_ptr, timeprops_ptr, 4);
+        if(adapt)
+            initial_H_adapt(HT_Elem_Ptr, HT_Node_Ptr, 0, matprops_ptr, pileprops_ptr, fluxprops_ptr, timeprops_ptr, 4);
         //@ElementsBucketDoubleLoop
         for(int ibuck = 0; ibuck < no_of_buckets; ibuck++)
         {
