@@ -126,6 +126,7 @@ void cxxTitanSimulation::init_piles()
         }
         int overallHt = 0;
         double lengthScale = matprops_ptr->scale.length;
+        double heightScale = matprops_ptr->scale.height; 
         if(adapt)
             initial_H_adapt(HT_Elem_Ptr, HT_Node_Ptr, 0, matprops_ptr, pileprops_ptr, fluxprops_ptr, timeprops_ptr, 4);
         //@ElementsBucketDoubleLoop
@@ -156,10 +157,10 @@ void cxxTitanSimulation::init_piles()
                    if (EmTemp->elementType() == ElementType::TwoPhases) {
                        double xmom, ymom;
                        pileprops_ptr->get_elliptical_pile_height(HT_Node_Ptr, EmTemp, matprops_ptr, &xmom, &ymom);
-                       EmTemp->put_height_mom(pile_height, static_cast<PilePropsTwoPhases*>(pileprops_ptr)->vol_fract[0], xmom, ymom);
+                       EmTemp->put_height_mom(pile_height/heightScale, static_cast<PilePropsTwoPhases*>(pileprops_ptr)->vol_fract[0], xmom, ymom);
                    }
                    else {
-                       EmTemp->put_height(pile_height);
+                       EmTemp->put_height(pile_height/heightScale);
                    }
                    
                    overallHt++;
