@@ -4,7 +4,7 @@ before_script:
   - tar xvzf /tmp/titan2d_depv4.0.0.tar.gz
 script:
   - autoreconf --install
-  - ./configure --prefix=/tmp/titan --enable-openmp --with-titan2d-dep=/tmp/titan2d_dep --enable-portable
+  - ./configure --prefix=/tmp/titan --enable-openmp --with-titan2d-dep=titan2d_dep --enable-portable
   - make
   - make install
 before_deploy:
