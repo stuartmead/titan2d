@@ -1,19 +1,14 @@
 #
 # About this simulation:
 #
-# NOTE what this simulation uses a different DEM
-# This simulation require bigger region and to keep 
-# example sizes small, the fine map was coarsened
-#
-# it also require much more iterations and execution time
-# because pile project itself further
+# NOTE that this is an example input file demonstrating
+# how to specify a raster pile input
 
 sim=TitanSimulation(overwrite_output=True)
 
 sim.setGIS(
     gis_format='GDAL', 
-    gis_map='DEM/ruapehu_utm.vrt',
-    region_limits=[374677.05,395603.56,-4351473.78,-4337363.57],
+    gis_map='PATH/TO/MAP/file.tif',
 )
 
 sim.setScale(
@@ -28,20 +23,20 @@ sim.setNumProp(
     order='First',
 )
 sim.setMatModel(
-    model='TwoPhases-Pitman-Le',
+    model='TwoPhases-Pitman-Le',#Using a two-phase material here, but a single phase one should work as well
     int_frict=37.0,
     bed_frict=27.0
 )
 sim.addPile(
-    pile_type='RASTER',
-    height=1.0,
+    pile_type='RASTER',#Set pile type to 'RASTER'
+    height=1.0,#Specify an approximate ellipse and height (important for AMR)
     center=[377675.265,-4347880.186],
     radii=[1871.0, 838.7],
     orientation=-30.0,
     Vmagnitude=0.0,
     Vdirection=0.0,
     vol_fract=0.7,
-    rasterfile='mang_upper.tif'
+    rasterfile='PATH/TO/PILEHEIGHT/file.tif'#Provide location of raster pile height
 )
 
 sim.setTimeProps(
