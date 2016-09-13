@@ -1,3 +1,11 @@
+NOTICE
+=====================================
+This version of the Titan code is modified to accept pile heights defined from raster files.
+Depending on when you recieved this file, it may not be using the most recent version of Titan2D.
+To be safe, I would recommend checking out the Titan2D source code and applying this as a patch.
+Updated code for Titan2D is avaliable from https://github.com/TITAN2D/titan2d and this modification of
+the code is avaliable from https://github.com/stuartmead/titan2d
+
 Installation
 =====================================
 See INSTALL for compilation instruction
