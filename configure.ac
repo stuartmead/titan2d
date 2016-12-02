@@ -130,7 +130,6 @@ AS_IF([test "x$with_titan2d_dep" != xno],
 		CPPFLAGS="$CPPFLAGS  -I$with_titan2d_dep/include"
 	    LDFLAGS="$LDFLAGS -L$with_titan2d_dep/lib"
 	],
-	[]
 )
 
 ## checks for libraries
@@ -193,24 +192,6 @@ AC_CHECK_LIB([hdf5_cpp],[H5open],,
 )
 AC_SUBST([HDF5_PATH],[$with_hdf5])
 
-## checks for GRASS
-#------------------------------------------------------------------------------------
-AC_ARG_WITH([grass],
-            [AS_HELP_STRING([--with-grass],[grass is needed for grass sites output.
-                            Provide absolute grass location --with-grass=/path/to/grass
-                            (default: without])],
-            [],
-            [with_grass=no]
-)
-AS_IF([test "x$with_grass" != xno],
-	[
-		CPPFLAGS="$CPPFLAGS  -I$with_grass/include"
-    	LDFLAGS="$LDFLAGS -L$with_grass/lib"
-    	AC_CHECK_LIB([gis],[G_gisinit],[])
-	],
-	[]
-)
-
 ## checks for GDAL
 #-------------------------------------------------------------------------------------
 AC_ARG_WITH(gdal,
@@ -227,8 +208,7 @@ AS_IF([test "x$with_gdal" != xno],
 		AC_PATH_PROG([GDAL_CONFIG],[gdal-config],[no],[$with_gdal/bin:$with_titan2d_dep/bin:$PATH])
 		with_gdal=`dirname $GDAL_CONFIG`
 		with_gdal=`readlink -f $with_gdal/..`
-	],
-	[]
+	]
 )
 AC_MSG_CHECKING([for GDAL availability])
 AS_IF([test "x$GDAL_CONFIG" != xno],
@@ -257,11 +237,11 @@ AM_CONDITIONAL([WITH_GDAL], test "x$with_gdal" != "xno")
 #SWIG
 #-------------------------------------------------------------------------------------
 AC_ARG_WITH(swig,
-            AS_HELP_STRING([--with-swig=<path to swig executable>],
+            AS_HELP_STRING([--with-swig=<path to swig home directory>],
             [Specify path to SWIG package. ]
             [If set will (re)generate python API, otherwise will try to use previously generated sources. ]
             [Note that github repository do not track them.]
-            [Provide absolute grass location --with-swig=/path/to/swig (default: without)]),
+            [Provide absolute path to swig top directory, --with-swig=/path/to/swig/home (default: without)]),
             [],[with_swig=$with_titan2d_dep])
 #only developers/advanced user should call swig
 #the public source code releases should come with swig generated files
@@ -280,7 +260,7 @@ AS_IF([test "x$with_swig" != xno],
 	AS_IF([test "x$with_titan2d_dep" != xno],
 	[
 		SWIG="SWIG_LIB=$with_titan2d_dep/share/swig/3.0.5 $SWIG"
-	],[]
+	]
 	) 
 	
 	AC_MSG_NOTICE([swig: $SWIG])
@@ -349,6 +329,7 @@ AS_IF([test "x$enable_java_gui" != xno],
 		
 	]
 )
+AM_CONDITIONAL([ENABLE_JAVA_GUI], [test "$enable_java_gui" = "yes"])
 
 # compile for vhub
 #------------------------------------------------------------------------------------
