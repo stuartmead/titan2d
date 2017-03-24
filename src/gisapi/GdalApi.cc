@@ -148,7 +148,7 @@ Initialize_GDAL_data_grid(std::string fullGispath, Gis_Grid &grid)
 
     // Initialize GDAL
     GDALAllRegister();
-    printf("Reading gdal raster grid from %s\n", fullGispath);
+    printf("Reading gdal raster grid from %s\n", fullGispath.c_str());
     
     // open GIS dataset
     dataset = (GDALDataset *) GDALOpen(fullGispath.c_str(), GA_ReadOnly);

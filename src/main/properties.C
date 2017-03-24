@@ -164,8 +164,8 @@ void PileProps::addPile(double hight, double xcenter, double ycenter, double maj
 
 void PileProps::addPileFile(std::string fileLoc)
 {
-    printf("\t\tPile height raster file is %s\n", fileLoc);
-    pileFile.push_back(fileLoc);
+    printf("\t\tPile height raster file is %s\n", fileLoc.c_str());
+    pileFile.push_back(fileLoc.c_str());
 }
 
 void PileProps::scale(double m_length_scale, double m_height_scale, double m_gravity_scale)
@@ -217,7 +217,7 @@ void PileProps::print_pile(int i)
     printf("\t\tPile type: %d\n", pile_type[i]);
     printf("\t\tPile volume [m^3]: %f\n", get_volume(i) * height_scale * length_scale * length_scale);
     if (pileFile.size()>0)
-        printf("\t\tPile file: %s\n", pileFile.at(i));
+        printf("\t\tPile file: %s\n", pileFile.at(i).c_str());
 }
 void PileProps::print0()
 {
@@ -459,7 +459,7 @@ void PilePropsTwoPhases::addPile(double hight, double xcenter, double ycenter, d
 void PilePropsTwoPhases::addPileFile(std::string fileLoc)
 {
     //PileProps::addPileFile(fileLoc);
-    printf("\t\tPile height raster file is %s\n", fileLoc);
+    printf("\t\tPile height raster file is %s\n", fileLoc.c_str());
     pileFile.push_back(fileLoc);
 }
 void PilePropsTwoPhases::print_pile(int i)
