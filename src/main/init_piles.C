@@ -175,6 +175,7 @@ void cxxTitanSimulation::init_piles()
             }
         }
         printf("Overall height cells modified from raster %i\n", overallHt);
+
         }
         else
         {

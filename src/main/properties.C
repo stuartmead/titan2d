@@ -1047,7 +1047,7 @@ void OutLine::update_single_phase()
             //update the record of maximum pileheight in the area covered by this element
             double ke = 0.0;
             double dp = 0.0;
-            if (h[ndx] > 1.0E-04){
+            if (h[ndx] > 0.0){ // SRM 1.0E-04){
             	ke = 0.5 * (hVx[ndx] * hVx[ndx] + hVy[ndx] * hVy[ndx]) / h[ndx];
             	dp = ke / h[ndx];
             }
@@ -1066,7 +1066,7 @@ void OutLine::update_single_phase()
             //update the record of maximum pileheight in the area covered by this element
             double ke = 0.0;
             double dp = 0.0;
-            if (h[ndx] > 1.0E-04){
+            if (h[ndx] > 0.0){    //1.0E-04) SRM CHANGED{
             	ke = 0.5 * (hVx[ndx] * hVx[ndx] + hVy[ndx] * hVy[ndx]) / h[ndx];
             	dp = ke / h[ndx];
             }
@@ -1309,7 +1309,7 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
     }
 
     //output max over time kinetic energy
-    if(elementType==ElementType::SinglePhase)
+    if(elementType==ElementType::SinglePhase || elementType==ElementType::TwoPhases)
     {
         int ix, iy;
         ostringstream filename;
@@ -1332,7 +1332,7 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
     }
 
     //dynamic_pressure
-    if(elementType==ElementType::SinglePhase)
+    if(elementType==ElementType::SinglePhase || elementType==ElementType::TwoPhases)
     {
         int ix, iy;
         ostringstream filename;
@@ -1356,7 +1356,7 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
     }
 
     // output cummulative kinetic-energy
-    if(elementType==ElementType::SinglePhase)
+    if(elementType==ElementType::SinglePhase || elementType==ElementType::TwoPhases)
     {
         int ix, iy;
         ostringstream filename;

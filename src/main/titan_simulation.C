@@ -931,7 +931,7 @@ void cxxTitanSimulation::run(bool start_from_restart)
 
     HAdapt hadapt(ElemTable, NodeTable, ElemProp,&timeprops,matprops_ptr,5);
     HAdaptUnrefine Unrefine(ElemTable, NodeTable, &timeprops,matprops_ptr);
-
+    
     outline.setElemNodeTable(ElemTable,NodeTable);
 
     assert(integrator!=nullptr);
@@ -959,6 +959,26 @@ void cxxTitanSimulation::run(bool start_from_restart)
     output_discharge(matprops_ptr, &timeprops, &discharge_planes, myid);
 
     move_data(numprocs, myid, ElemTable, NodeTable, &timeprops);
+    
+    if((adapt != 0) && (pileprops_ptr->pile_type[0] == PileProps::RASTER))
+    {
+       AssertMeshErrorFree(ElemTable, NodeTable, numprocs, myid, -2.0);
+
+       ElemTable->conformation++;
+       hadapt.adapt(0, 0.05);
+       Unrefine.unrefine(0.01);
+
+       //this move_data() here for debug... to make AssertMeshErrorFree() Work
+       move_data(numprocs, myid, ElemTable, NodeTable, &timeprops);
+
+       //update temporary arrays of elements/nodes pointers
+       NodeTable->flushNodeTable();
+       ElemTable->flushElemTable();
+
+       ASSERT2(ElemTable->checkPointersToNeighbours("After all adaptions",false)==0);
+    }
+
+
     save_vizoutput_file(XDMF_NEW);
 
     /*
@@ -998,6 +1018,7 @@ void cxxTitanSimulation::run(bool start_from_restart)
     PROFILING1_START(pt_start);
 
     titanTimingsAlongSimulation.totalTime = MPI_Wtime();
+
     while (!(timeprops.ifend(0)) && !ifstop)
     {
         /*
@@ -1025,8 +1046,8 @@ void cxxTitanSimulation::run(bool start_from_restart)
             update_topo(ElemTable, NodeTable, myid, numprocs, matprops_ptr, &timeprops, &mapnames);
         }
         PROFILING1_STOPADD_RESTART(tsim_iter_update_topo,pt_start);
-
-        if((adapt != 0) && (timeprops.iter % 5 == 4))
+        
+        if((adapt != 0) && (timeprops.iter % 5 == 4) )
         {
             AssertMeshErrorFree(ElemTable, NodeTable, numprocs, myid, -2.0);
 
