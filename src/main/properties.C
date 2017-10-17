@@ -14,6 +14,8 @@
  *******************************************************************
  * $Id: properties.h 233 2012-03-27 18:30:40Z dkumar $ 
  */
+#include <gdal_priv.h>
+#include <ogr_spatialref.h>
 
 #include <assert.h>
 #include "../header/properties.h"
@@ -1216,10 +1218,32 @@ void OutLine::update_two_phases()
 /*! this function outputs the maximum over time map of pileheights
  *  to the file pileheightrecord.xxxxxx
  */
-void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
+void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr, MapNames* mapnames_ptr)
 {
     double ENERGY_SCALE = matprops_ptr->scale.length * matprops_ptr->scale.gravity * matprops_ptr->scale.height;
 
+    GDALAllRegister();
+    const char *pszFormat = "GTiff";
+    GDALDriverH hDriver = GDALGetDriverByName( pszFormat );
+    GDALDatasetH baseGdataset;
+
+    //Read path into character array
+    char gisPath[200];
+    strcpy(gisPath, mapnames_ptr->gis_map.c_str());
+
+    //Open base dataset to get info for PH map
+    baseGdataset = GDALOpen(gisPath, GA_ReadOnly);
+    if(baseGdataset == NULL)
+    {
+        printf("GIS ERROR: Unable to open base GIS dataset\n");
+    }
+    double geoTransform[6] = {xminmax[0] * matprops_ptr->scale.length,
+        ((xminmax[1]-xminmax[0]) * matprops_ptr->scale.length)/Nx,
+        0,
+        yminmax[0] * matprops_ptr->scale.length,
+        0,
+        ((yminmax[1]-yminmax[0])* matprops_ptr->scale.length)/Ny};
+        
     // output max over time pile-height
     {
         int ix, iy;
@@ -1241,6 +1265,36 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
             fprintf(fp, "%g\n", pileheight[iy*stride+ix] * matprops_ptr->scale.height);
         }
         fclose(fp);
+        
+        // Write GDAL pile outline as GeoTiff
+        GDALDatasetH phGdataset;
+        
+        ostringstream phTif;
+        phTif<<output_prefix<<"pileheightrecord."<<setw(6)<< setfill('0') <<internal<<statprops_ptr->runid<<".tif"<<std::ends;
+        phGdataset = GDALCreate(hDriver, phTif.str().c_str(),
+                Nx, Ny, 1, GDT_Float32, NULL);
+        GDALSetProjection(phGdataset, GDALGetProjectionRef(baseGdataset)) ;   
+        
+        GDALSetGeoTransform(phGdataset, geoTransform);
+        //phGdataset = GDALCreateCopy(hDriver, phTif.str().c_str(), baseGdataset,FALSE,
+        //    NULL, NULL, NULL);
+        if(phGdataset == NULL)
+        {
+              cout << "GIS ERROR: Unable to create pile height GIS dataset" << endl;
+        }
+        //Get raster band handle
+        GDALRasterBandH phHandle = GDALGetRasterBand(phGdataset, 1);
+        //Write data
+        GDALRasterIO(phHandle, GF_Write,
+            0,0,
+            Nx, Ny,
+            pileheight,
+            Nx, Ny,
+            GDT_Float64,
+            0,0);
+        //Properly close dataset
+        GDALClose(phGdataset);       
+       
 
         /*ostringstream filename2;
         filename2<<output_prefix<<"pileheightrecord."<<setw(6)<< setfill('0') <<internal<<statprops_ptr->runid<<".mat"<<std::ends;
@@ -1329,6 +1383,33 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
             fprintf(fp, "%g\n", max_kinergy[iy*stride+ix] * ENERGY_SCALE);
         }
         fclose(fp);
+
+        GDALDatasetH maxKeGdataset;
+
+        ostringstream keTif;
+        keTif<<output_prefix<<"maxkerecord."<<setw(6)<< setfill('0') <<internal<<statprops_ptr->runid<<".tif"<<std::ends;
+        maxKeGdataset = GDALCreate(hDriver, keTif.str().c_str(),
+                Nx, Ny, 1, GDT_Float32, NULL);
+        GDALSetProjection(maxKeGdataset, GDALGetProjectionRef(baseGdataset)) ;   
+        GDALSetGeoTransform(maxKeGdataset, geoTransform);
+        if(maxKeGdataset == NULL)
+        {
+              cout << "GIS ERROR: Unable to create pile height GIS dataset" << endl;
+        }
+        //Get raster band handle
+        GDALRasterBandH keHandle = GDALGetRasterBand(maxKeGdataset, 1);
+        //Write data
+        GDALRasterIO(keHandle, GF_Write,
+            0,0,
+            Nx, Ny,
+            max_kinergy,
+            Nx, Ny,
+            GDT_Float64,
+            0,0);
+        GDALSetRasterScale(keHandle, ENERGY_SCALE);  		
+        
+        //Properly close dataset
+        GDALClose(maxKeGdataset);
     }
 
     //dynamic_pressure
@@ -1353,6 +1434,33 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
             fprintf(fp, "%g\n", max_dynamic_pressure[iy*stride+ix] * ENERGY_SCALE/matprops_ptr->scale.height);
         }
         fclose(fp);
+
+        GDALDatasetH maxDpGdataset;
+        
+        ostringstream dpTif;
+        dpTif<<output_prefix<<"max_dynamic_pressure_record."<<setw(6)<< setfill('0') <<internal<<statprops_ptr->runid<<".tif"<<std::ends;
+        maxDpGdataset = GDALCreate(hDriver, dpTif.str().c_str(),
+            Nx, Ny, 1, GDT_Float32, NULL);
+        GDALSetProjection(maxDpGdataset, GDALGetProjectionRef(baseGdataset)) ;   
+        GDALSetGeoTransform(maxDpGdataset, geoTransform);
+        if(maxDpGdataset == NULL)
+        {
+            cout << "GIS ERROR: Unable to create pile height GIS dataset" << endl;
+        }
+        //Get raster band handle
+        GDALRasterBandH dpHandle = GDALGetRasterBand(maxDpGdataset, 1);
+        //Write data
+        GDALRasterIO(dpHandle, GF_Write,
+            0,0,
+            Nx, Ny,
+            max_dynamic_pressure,
+            Nx, Ny,
+            GDT_Float64,
+            0,0);
+        GDALSetRasterScale(dpHandle, ENERGY_SCALE/matprops_ptr->scale.height);  		
+        
+        //Properly close dataset
+        GDALClose(maxDpGdataset);
     }
 
     // output cummulative kinetic-energy
@@ -1376,6 +1484,34 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
             fprintf(fp, "%g\n", cum_kinergy[iy*stride+ix] * ENERGY_SCALE);
         }
         fclose(fp);
+        
+        GDALDatasetH cumKeGdataset;
+        
+        ostringstream ckeTif;
+        ckeTif<<output_prefix<<"cumkerecord."<<setw(6)<< setfill('0') <<internal<<statprops_ptr->runid<<".tif"<<std::ends;
+        cumKeGdataset = GDALCreate(hDriver, ckeTif.str().c_str(),
+            Nx, Ny, 1, GDT_Float32, NULL);
+        GDALSetProjection(cumKeGdataset, GDALGetProjectionRef(baseGdataset)) ;   
+        GDALSetGeoTransform(cumKeGdataset, geoTransform);
+        if(cumKeGdataset == NULL)
+        {
+            cout << "GIS ERROR: Unable to create pile height GIS dataset" << endl;
+        }
+        //Get raster band handle
+        GDALRasterBandH ckeHandle = GDALGetRasterBand(cumKeGdataset, 1);
+        //Write data
+        GDALRasterIO(ckeHandle, GF_Write,
+            0,0,
+            Nx, Ny,
+            cum_kinergy,
+            Nx, Ny,
+            GDT_Float64,
+            0,0);
+        GDALSetRasterScale(ckeHandle, ENERGY_SCALE)  ;		
+        
+        //Properly close dataset
+        GDALClose(cumKeGdataset);
+
     }
     // output elevation data
     {
@@ -1407,7 +1543,37 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr)
             fprintf(fp,"%g\n",elevation);
         }
         fclose(fp);
+        /*    
+        GDALDataset elevGdataset;
+        
+        ostringstream elevTif;
+        elevTif<<output_prefix<<"cumkerecord."<<setw(6)<< setfill('0') <<internal<<statprops_ptr->runid<<".tif"<<std::ends;
+        elevGdataset = GDALCreate(hDriver, elevTif.str().c_str(),
+            Nx, Ny, 1, GDT_Float32, NULL);
+        GDALSetProjection(elevGdataset, GDALGetProjectionRef(baseGdataset)) ;   
+        GDALSetGeoTransform(elevGdataset, geoTransform);
+        if(elevGdataset == NULL)
+        {
+            cout << "GIS ERROR: Unable to create pile height GIS dataset" << endl;
+        }
+        //Get raster band handle
+        GDALRasterBandH elevTif = GDALGetRasterBand(elevGdataset, 1);
+        //! Return elevation at points XY of original grid, Input: resolution - resolution, xmin - minimum X coordinate of points window, xmax - maximum X coordinate of points window, ymin - minimum Y coordinate of points window, ymax - maximum Y coordinate of points window, Output: elev - elevation at points XY of selected window, Return: 0 if OK, see table otherwise
+        //Write data
+        GDALRasterIO(elevHandle, GF_Write,
+            0,0,
+            Nx, Ny,
+            cum_kinergy,
+            Nx, Ny,
+            GDT_Float64,
+            0,0);
+        GDALSetRasterScale(elevHandle, ENERGY_SCALE)  		
+        
+        //Properly close dataset
+        GDALClose(elevGdataset);
+        */
     }
+    GDALClose(baseGdataset);
     return;
 }
 

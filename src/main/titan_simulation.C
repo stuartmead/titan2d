@@ -1255,14 +1255,14 @@ void cxxTitanSimulation::run(bool start_from_restart)
             MPI_Reduce(outline.max_kinergy, outline2.max_kinergy, NxNyout, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
             MPI_Reduce(outline.cum_kinergy, outline2.cum_kinergy, NxNyout, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             if(myid == 0)
-                outline2.output(matprops_ptr, statprops);
+                outline2.output(matprops_ptr, statprops, mapnames_ptr);
         }
         else
         {
-            outline.output(matprops_ptr, statprops);
+            outline.output(matprops_ptr, statprops, mapnames_ptr);
         }
 #else //USE_MPI
-        outline.output(matprops_ptr, statprops);
+        outline.output(matprops_ptr, statprops, mapnames_ptr);
 #endif //USE_MPI
     }
 

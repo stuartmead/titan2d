@@ -899,7 +899,7 @@ public:
     /*! this function outputs the maximum over time map of pileheights
      *  to the file pileheightrecord.xxxxxx
      */
-    void output(MatProps* matprops_ptr, StatProps* statprops_ptr);
+    void output(MatProps* matprops_ptr, StatProps* statprops_ptr, MapNames* mapnames_ptr);
 
     //! this function reads in the previous map of maximum throughout time pileheight stored in the file pileheightrecord.xxxxxx during restart
     void reload(MatProps* matprops_ptr, StatProps* statprops_ptr);
