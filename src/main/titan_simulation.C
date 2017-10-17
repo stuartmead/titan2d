@@ -359,6 +359,7 @@ void cxxTitanSimulation::process_input(bool start_from_restart)
 
         //the discharge plane section ends here
         /*************************************************************************/
+        localquants.scale(timeprops_ptr->TIME_SCALE, scale_.length, scale_.height, scale_.gravity);
     }
 
 
@@ -457,6 +458,7 @@ void cxxTitanSimulation::h5write(H5::CommonFG *parent)
     statprops->h5write(parent);
     mapnames.h5write(parent);
     outline.h5write(parent);
+    localquants.h5write(parent);
 
 
 }
@@ -497,6 +499,7 @@ void cxxTitanSimulation::h5read(const H5::CommonFG *parent)
     mapnames.h5read(parent);
     outline.setElemNodeTable(ElemTable,NodeTable);
     outline.h5read(parent);
+    localquants.h5read(parent);
 
     integrator=Integrator::createIntegrator(parent,this);
 
@@ -807,6 +810,12 @@ void cxxTitanSimulation::save_vizoutput_file(const int mode)
 
         output_discharge(matprops, &timeprops, &discharge_planes, myid);
 
+        if(mode == XDMF_OLD)
+        {
+        	output_localquants(&timeprops, &localquants, myid);
+        	output_globalquants(&timeprops, statprops, myid);
+        }
+
         if(myid == 0)
             output_summary(&timeprops, statprops, savefileflag);
 
@@ -985,7 +994,7 @@ void cxxTitanSimulation::run(bool start_from_restart)
      cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-     Time Stepping Loop
+			Time Stepping Loop
 
      cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -1015,8 +1024,7 @@ void cxxTitanSimulation::run(bool start_from_restart)
     PROFILING1_DEFINE(pt_start1);
     PROFILING1_START(pt_start0);
     PROFILING1_DEFINE(pt_start);
-    PROFILING1_START(pt_start);
-
+    PROFILING1_START(pt_start)
     titanTimingsAlongSimulation.totalTime = MPI_Wtime();
 
     while (!(timeprops.ifend(0)) && !ifstop)
@@ -1155,7 +1163,7 @@ void cxxTitanSimulation::run(bool start_from_restart)
          * output results to file
          */
         if(timeprops.ifTimeForTimeSeriesOutput())
-            save_vizoutput_file(XDMF_OLD);
+        	save_vizoutput_file(XDMF_OLD);
         PROFILING1_STOPADD_RESTART(tsim_iter_output,pt_start);
 #ifdef PERFTEST
         int countedvalue=timeprops.iter%2+1;
@@ -1194,6 +1202,7 @@ void cxxTitanSimulation::run(bool start_from_restart)
             titanTimingsAlongSimulation.totalTime = MPI_Wtime();
         }
         PROFILING1_STOPADD_RESTART(tsim_iter_post,pt_start);
+//        output_localquants(&timeprops, &localquants, myid);
     }
 
     move_data(numprocs, myid, ElemTable, NodeTable, &timeprops);
@@ -1232,6 +1241,53 @@ void cxxTitanSimulation::run(bool start_from_restart)
     if(myid == 0)
         output_stoch_stats(matprops_ptr, statprops);
     IF_MPI(MPI_Barrier(MPI_COMM_WORLD));
+
+	if (elementType == ElementType::SinglePhase) {
+		//write out temporal integral values of global quantities computed in integrators class
+		double tempin[12], tempout[12];
+		tempin[0] = integrator->Tforce_gx;
+		tempin[1] = integrator->Tforce_gy;
+		tempin[2] = integrator->Tforce_bx;
+		tempin[3] = integrator->Tforce_by;
+		tempin[4] = integrator->Tforce_bcx;
+		tempin[5] = integrator->Tforce_bcy;
+		tempin[6] = integrator->Tforce_rx;
+		tempin[7] = integrator->Tforce_ry;
+		tempin[8] = integrator->Tpower_g;
+		tempin[9] = integrator->Tpower_b;
+		tempin[10] = integrator->Tpower_bc;
+		tempin[11] = integrator->Tpower_r;
+
+#ifdef USE_MPI
+		MPI_Reduce(tempin, tempout, 12, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#else //USE_MPI
+		for (int i = 0; i < 12; ++i)
+			tempout[i] = tempin[i];
+#endif //USE_MPI
+
+		if (myid == 0) {
+
+			double FORCE_SCALE = scale_.gravity * scale_.height * scale_.length
+					* scale_.length * timeprops.TIME_SCALE;
+			double POWER_SCALE = sqrt(scale_.gravity * scale_.length) * FORCE_SCALE;
+
+			for (int i = 0; i < 4; ++i) {
+				tempout[i] *= FORCE_SCALE;
+				tempout[i+4] *= FORCE_SCALE;
+				tempout[i+8] *= POWER_SCALE;
+			}
+
+			FILE* fp = fopen("TemporalIntegrals.info", "w");
+			fprintf(fp, "%g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n",
+					tempout[0], tempout[1], tempout[2], tempout[3], tempout[4],
+					tempout[5], tempout[6], tempout[7], tempout[8], tempout[9],
+					tempout[10], tempout[11]);
+			fclose(fp);
+		}
+
+		//write out temporal integral values of local quantities computed in LocalQuants class
+		output_localquantsTimeIntegrals(&timeprops, &localquants, myid);
+	}
 
     //output maximum flow depth a.k.a. flow outline
     PROFILING3_START(pt_start1);
@@ -1284,7 +1340,7 @@ void cxxTitanSimulation::run(bool start_from_restart)
         titanProfiling.print();
 
     IF_MPI(MPI_Barrier(MPI_COMM_WORLD));
-    
+
     return;
 }
 
@@ -1296,6 +1352,7 @@ void cxxTitanSimulation::input_summary()
         get_pileprops()->print0();
         get_fluxprops()->print0();
         get_discharge_planes()->print0();
+        get_local_quants()->print0();
         get_integrator()->print0();
         get_matprops()->print0();
     }

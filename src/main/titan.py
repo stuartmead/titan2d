@@ -271,7 +271,7 @@ class TitanSimulationBase(object):
     #defaultParameters can be removed
     possible_internal_mat_models={
         'Coulomb':{
-            'allParameters':('order','int_frict','stopping_criteria'),
+            'allParameters':('order','int_frict','stopping_criteria','Threshold'),
             'defaultParameters':{'order':'First','int_frict':37.0,'stopping_criteria':None},
             'elementType':ElementType_SinglePhase,
             'integrators':[
@@ -282,11 +282,12 @@ class TitanSimulationBase(object):
             ]
         },
         'Voellmy-Salm':{
-            'allParameters':('order','mu','xi'), 
+            'allParameters':('order','mu','xi','Threshold'), 
             'defaultParameters':{
                 'order':'First',
                 'mu' : 0.5,
                 'xi' : 120.0,
+                'Threshold' : 0.05
             },
             'elementType':ElementType_SinglePhase,
             'integrators':[{
@@ -295,14 +296,15 @@ class TitanSimulationBase(object):
             }]
         },
         'Pouliquen-Forterre':{
-            'allParameters':('order','phi1','phi2','phi3','Beta','L_material'), 
+            'allParameters':('order','phi1','phi2','phi3','Beta','L_material','Threshold'), 
             'defaultParameters':{
                 'order':'First',
                 'phi1':32.9,
                 'phi2':42.0,
                 'phi3':33.9,
                 'Beta':0.65,
-                'L_material':1.0E-3
+                'L_material':1.0E-3,
+                'Threshold' : 0.05
             },
             'elementType':ElementType_SinglePhase,
             'integrators':[{
@@ -431,6 +433,7 @@ class TitanSimulationBase(object):
                             levelZeroParameters={
                                 'int_frict':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
                                 'stopping_criteria':{'validator':VarTypeDictConvert(TitanSimulationBase.possible_stopping_criteria,NoneToStringNone=True).chk,'desc':''},
+                                'Threshold':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
                             },
                             defaultParameters={'use_gis_matmap':False,'stopping_criteria':None},
                             switchArguments={
@@ -462,6 +465,7 @@ class TitanSimulationBase(object):
                             levelZeroParameters={
                                 'mu':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
                                 'xi':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
+                                'Threshold':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
                             }
                         ),
                         'Pouliquen-Forterre':TiArgCheckerAndSetter(
@@ -470,7 +474,8 @@ class TitanSimulationBase(object):
                                 'phi2':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
                                 'phi3':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
                                 'Beta':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
-                                'L_material':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''}
+                                'L_material':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
+                                'Threshold':{'validator':VarType(float,conditions=[{'f':lambda v: v > 0,'msg':'should be positive!'}]).chk,'desc':''},
                             }
                         ),
                         'TwoPhases-Pitman-Le':TiArgCheckerAndSetter(
@@ -684,6 +689,19 @@ class TitanSimulationBase(object):
                 },
             }
         )
+        #addLocalQuants
+        self.ui_LocalQuants=[]
+        self.chk_LocalQuants=TiArgCheckerAndSetter(
+            sectionName="addLocalQuants",
+            levelZeroParameters={
+                'x':{'desc':'',
+                    'validator':VarType(float).chk
+                }, 
+                'y':{'desc':'',
+                    'validator':VarType(float).chk
+                },
+            }
+        )
         #loadRestart
         self.ui_loadRestart=None
         self.chk_loadRestart=TiArgCheckerAndSetter(
@@ -806,6 +824,10 @@ class TitanSimulationBase(object):
         args={'x_a':x_a,'y_a':y_a,'x_b':x_b,'y_b':y_b}
         self.ui_DischargePlane.append(self.chk_DischargePlane.process(args))
         
+    def addLocalQuants(self,x,y):
+        args={'x':x,'y':y}
+        self.ui_LocalQuants.append(self.chk_LocalQuants.process(args))
+        
     def loadRestart(self,**kwarg):
         self.ui_loadRestart=self.chk_loadRestart.process(kwarg)
         
@@ -820,6 +842,8 @@ class TitanSimulationBase(object):
                 raise NotImplementedError("TitanSimulation:addFluxSource: FluxSources are not imlemented for TwoPhases-Pitman-Le model!")
             if len(self.ui_DischargePlane)>0:
                 raise NotImplementedError("TitanSimulation:addDischargePlane: DischargePlanes are not imlemented for TwoPhases-Pitman-Le model!")
+            if len(self.ui_LocalQuants)>0:
+                raise NotImplementedError("TitanSimulation:addLocalQuants: LocalQuants are not imlemented for TwoPhases-Pitman-Le model!")
         else:
             for pile in self.ui_Pile:
                 if 'vol_fract' in pile:
@@ -869,6 +893,7 @@ class TitanSimulation(TitanSimulationBase):
             print self.ui_Pile
             print self.ui_FluxSource
             print self.ui_DischargePlane
+            print self.ui_LocalQuants
             print self.ui_loadRestart
         #convinience references
         ui_GIS=self.ui_GIS
@@ -883,6 +908,7 @@ class TitanSimulation(TitanSimulationBase):
         ui_Pile=self.ui_Pile
         ui_FluxSource=self.ui_FluxSource
         ui_DischargePlane=self.ui_DischargePlane
+        ui_LocalQuants=self.ui_LocalQuants
         ui_loadRestart=self.ui_loadRestart
         
         model=self.ui_MatModel['model']
@@ -1119,6 +1145,10 @@ class TitanSimulation(TitanSimulationBase):
         # ui_DischargePlane
         for disPlane in ui_DischargePlane:
             self.sim.discharge_planes.addDischargePlane(disPlane['x_a'],disPlane['y_a'],disPlane['x_b'],disPlane['y_b'])
+        #######################################################################
+        # ui_LocalQuants
+        for locQuant in ui_LocalQuants:
+            self.sim.localquants.addLocalQuants(locQuant['x'],locQuant['y'])
         #######################################################################
         # ui_loadRestart
         if ui_loadRestart !=None:

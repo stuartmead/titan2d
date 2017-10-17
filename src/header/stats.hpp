@@ -110,6 +110,23 @@ public:
     //! xyminmax holds the minimum and maximum x and y coordinates where the pile height is greater than hxyminmax
     double hxyminmax;
 
+    double force_gx;
+    double force_gy;
+    double force_bx;
+    double force_by;
+    double force_bcx;
+    double force_bcy;
+    double force_rx;
+    double force_ry;
+    double power_g;
+    double power_b;
+    double power_bc;
+    double power_r;
+
+    double Vol_;
+    double Area_;
+    double Velmean_;
+
     //! the latin hypercube sampling specific stats
     LHS_Props lhs;
 

@@ -248,7 +248,10 @@ public:
     virtual void addPileFile(std::string fileLoc);
     virtual double get_volume(int i) const
     {
-        return PI * pileheight[i] * majorrad[i] * minorrad[i] / 2.0;
+    	if (pile_type[i] == PileProps::CYLINDER)
+    		return PI * pileheight[i] * majorrad[i] * minorrad[i];
+    	else if (pile_type[i] == PileProps::PARABALOID)
+    		return PI * pileheight[i] * majorrad[i] * minorrad[i] / 2.0;
     }
     virtual void scale(double length_scale, double height_scale, double gravity_scale);
     double get_smallest_pile_radius();
@@ -1248,6 +1251,135 @@ public:
     void h5write(H5::CommonFG *parent, string group_name="DischargePlanes") const;
     //! Load object content from hdf5 file
     void h5read(const H5::CommonFG *parent, const  string group_name="DischargePlanes");
+};
+
+class LocalQuants {
+public:
+	// number of locations
+	int no_locations;
+	double height_scale;
+	double length_scale;
+	double velocity_scale;
+	double st_scale;
+	double p_scale;
+	double Tst_scale;
+	double Tp_scale;
+
+	// array containing Easting coordinates (X)
+	std::vector<double> X;
+
+	// array containing Northing coordinates (Y)
+	std::vector<double> Y;
+
+	// array containing Easting slopes (X)
+	std::vector<double> zetax;
+
+	// array containing Northing slopes (Y)
+	std::vector<double> zetay;
+
+	// temporary arrays holding the local values of state vars and their distance to the specified location
+	std::vector<std::vector<double> > temps;
+
+	// temporary arrays holding the local values of state vars and their distance to the specified location
+	std::vector<std::vector<double> > TimeInts;
+
+	// array holding flow height time-history in the specified location
+	std::vector<double> Height;
+
+	// array holding flow velocity time-history in the specified location
+	std::vector<double> Velocity;
+
+	// array holding S_gx time-history in the specified location
+	std::vector<double> Fgx;
+
+	// array holding S_gy time-history in the specified location
+	std::vector<double> Fgy;
+
+	// array holding S_bedx time-history in the specified location
+	std::vector<double> Fbx;
+
+	// array holding S_bedy time-history in the specified location
+	std::vector<double> Fby;
+
+	// array holding S_bedcurvx time-history in the specified location
+	std::vector<double> Fbcx;
+
+	// array holding S_bedcurvy time-history in the specified location
+	std::vector<double> Fbcy;
+
+	// array holding S_otherx time-history in the specified location
+	std::vector<double> Fix;
+
+	// array holding S_othery time-history in the specified location
+	std::vector<double> Fiy;
+
+	// array holding S_gy time-history in the specified location
+	std::vector<double> Pg;
+
+	// array holding S_bedcurvx time-history in the specified location
+	std::vector<double> Pb;
+
+	// array holding S_bedcurvx time-history in the specified location
+	std::vector<double> Pbc;
+
+	// array holding S_othery time-history in the specified location
+	std::vector<double> Pi;
+
+	// array holding S_gx time-history in the specified location
+	std::vector<double> T_Fgx;
+
+	// array holding S_gy time-history in the specified location
+	std::vector<double> T_Fgy;
+
+	// array holding S_bedx time-history in the specified location
+	std::vector<double> T_Fbx;
+
+	// array holding S_bedy time-history in the specified location
+	std::vector<double> T_Fby;
+
+	// array holding S_bedcurvx time-history in the specified location
+	std::vector<double> T_Fbcx;
+
+	// array holding S_bedcurvx time-history in the specified location
+	std::vector<double> T_Fbcy;
+
+	// array holding S_otherx time-history in the specified location
+	std::vector<double> T_Fix;
+
+	// array holding S_othery time-history in the specified location
+	std::vector<double> T_Fiy;
+
+	// array holding S_gy time-history in the specified location
+	std::vector<double> T_Pg;
+
+	// array holding S_bedcurvx time-history in the specified location
+	std::vector<double> T_Pb;
+
+	// array holding S_bedcurvx time-history in the specified location
+	std::vector<double> T_Pbc;
+
+	// array holding S_othery time-history in the specified location
+	std::vector<double> T_Pi;
+
+	LocalQuants();
+	~LocalQuants();
+	void allocate(int m_no_locations);
+	void addLocalQuants(const double x_in, const double y_in);
+	void init(int no_locations_in, double *XX, double *YY);
+	void scale(double m_time_scale, double m_length_scale, double m_height_scale, double m_gravity_scale);
+	void print_local_quants(int i);
+	void print0();
+	void FindElement(const double dt, const double dx, const double dy,
+			const double xEl, const double yEl, const double h,
+			const double hVx, const double hVy, const double Fgravx,
+			const double Fgravy, const double Fbedx, const double Fbedy,
+			const double Fbedcx, const double Fbedcy, const double Fintx,
+			const double Finty, const double zeta_x, const double zeta_y);
+	void StoreQuant(MatProps* matprops_ptr, TimeProps* timeprops);
+	//! Dump object content to hdf5 file
+	void h5write(H5::CommonFG *parent, string group_name = "LocalQuants") const;
+	//! Load object content from hdf5 file
+	void h5read(const H5::CommonFG *parent, const string group_name = "LocalQuants");
 };
 
 //! The FluxProps Structure holds all the data about extrusion flux sources (material flowing out of the ground) they can become active and later deactivate at any time during the simulation.  There must be at least 1 initial pile or one flux source that is active at time zero, otherwise the timestep will be set to zero and the simulation will never advance.
