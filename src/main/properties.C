@@ -1284,6 +1284,8 @@ void OutLine::output(MatProps* matprops_ptr, StatProps* statprops_ptr, MapNames*
         }
         //Get raster band handle
         GDALRasterBandH phHandle = GDALGetRasterBand(phGdataset, 1);
+        //Set scale
+        GDALSetRasterScale(phHandle, matprops_ptr->scale.height);
         //Write data
         GDALRasterIO(phHandle, GF_Write,
             0,0,
