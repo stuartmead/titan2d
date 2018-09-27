@@ -37,13 +37,13 @@ int Initialize_GDAL_data(const char *fullGispath)
         int zone = oSRS->GetUTMZone(&pbxmax);
         if(zone == 0)
         {
-            if (oSrs->GetAttrValue("PROJECTION", 0) == "Transverse_Mercator") 
+            if (oSRS->GetAuthorityCode(NULL) == "27200" || oSRS->GetAuthorityCode(NULL) == "2193") 
 		{
                     cout << "BIG WARNING:" << endl;
                     cout << "The mapset seems to be in coordinates, other than UTM." << endl;
                     cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
                     cout << "Consider using \"gdalwarp\" to transform." << endl;
-                    cout << "We are passing this through, because the coordinate system" << "is Transverse_Mercator" << endl;
+                    cout << "We are passing this through, because the EPSG" << "is NZGD/NZTM" << endl;
 		}
 	    else 
                 {
@@ -178,13 +178,13 @@ Initialize_GDAL_data_grid(std::string fullGispath, Gis_Grid &grid)
         int zone = oSRS->GetUTMZone(&pbxmax);
         if(zone == 0)
         {
-            if (oSrs->GetAttrValue("PROJECTION", 0) == "Transverse_Mercator") 
+            if (oSRS->GetAuthorityCode(NULL) == "27200" || oSRS->GetAuthorityCode(NULL) == "2193")    
                 {
                     cout << "BIG WARNING:" << endl;
                     cout << "The mapset seems to be in coordinates, other than UTM." << endl;
                     cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
                     cout << "Consider using \"gdalwarp\" to transform." << endl;
-                    cout << "We are passing this through, because the coordinate system" << "is Transverse_Mercator" << endl;
+                    cout << "We are passing this through, because the EPSG" << "is NZGD/NZTM" << endl;
                 }
             else
                 {
