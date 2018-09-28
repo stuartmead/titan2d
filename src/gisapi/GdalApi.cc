@@ -37,23 +37,24 @@ int Initialize_GDAL_data(const char *fullGispath)
         int zone = oSRS->GetUTMZone(&pbxmax);
         if(zone == 0)
         {
-            if (oSRS->GetAuthorityCode(NULL) == "27200" || oSRS->GetAuthorityCode(NULL) == "2193") 
-		{
-                    cout << "BIG WARNING:" << endl;
-                    cout << "The mapset seems to be in coordinates, other than UTM." << endl;
-                    cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
-                    cout << "Consider using \"gdalwarp\" to transform." << endl;
-                    cout << "We are passing this through, because the EPSG" << "is NZGD/NZTM" << endl;
-		}
-	    else 
-                {
-            	    cout << "FATAL ERROR:" << endl;
-            	    cout << "The mapset seems to be in coordinates, other than UTM." << endl;
-            	    cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
-            	    cout << "Consider using \"gdalwarp\" to transform." << endl;
-            	    cout << "If you sure about the coordinate system" << "change ZONE to something other than zero" << endl;
-            	    return (-4);
-		}
+            if ( !strcmp(oSRS->GetAuthorityCode(NULL), "27200") || !strcmp(oSRS->GetAuthorityCode(NULL), "2193"))
+            {
+                cout << "WARNING:" << endl;
+                cout << "The mapset seems to be in coordinates, other than UTM." << endl;
+                cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
+                cout << "Consider using \"gdalwarp\" to transform." << endl;
+                cout << "We are passing this through, because the EPSG" << " is NZGD/NZTM" << endl;
+            }
+            else
+            {
+                cout << "FATAL ERROR:" << endl;
+                cout << "The mapset seems to be in coordinates, other than UTM." << endl;
+                cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
+                cout << "Consider using \"gdalwarp\" to transform." << endl;
+                cout << "Authority code is " << oSRS->GetAuthorityCode(NULL) << endl;
+                cout << "If you sure about the coordinate system" << " change ZONE to something other than zero" << endl;
+                return (-4);
+            }
         }
     }
     else
@@ -178,23 +179,24 @@ Initialize_GDAL_data_grid(std::string fullGispath, Gis_Grid &grid)
         int zone = oSRS->GetUTMZone(&pbxmax);
         if(zone == 0)
         {
-            if (oSRS->GetAuthorityCode(NULL) == "27200" || oSRS->GetAuthorityCode(NULL) == "2193")    
-                {
-                    cout << "BIG WARNING:" << endl;
-                    cout << "The mapset seems to be in coordinates, other than UTM." << endl;
-                    cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
-                    cout << "Consider using \"gdalwarp\" to transform." << endl;
-                    cout << "We are passing this through, because the EPSG" << "is NZGD/NZTM" << endl;
-                }
+            if (!strcmp(oSRS->GetAuthorityCode(NULL), "27200") || !strcmp(oSRS->GetAuthorityCode(NULL), "2193"))
+            {
+                cout << "WARNING:" << endl;
+                cout << "The mapset seems to be in coordinates, other than UTM." << endl;
+                cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
+                cout << "Consider using \"gdalwarp\" to transform." << endl;
+                cout << "We are passing this through, because the EPSG " << "is NZGD/NZTM" << endl;
+            }
             else
-                {
-                    cout << "FATAL ERROR:" << endl;
-                    cout << "The mapset seems to be in coordinates, other than UTM." << endl;
-                    cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
-                    cout << "Consider using \"gdalwarp\" to transform." << endl;
-                    cout << "If you sure about the coordinate system" << "change ZONE to something other than zero" << endl;
-                    return (-4);
-                }   
+            {
+                cout << "FATAL ERROR:" << endl;
+                cout << "The mapset seems to be in coordinates, other than UTM." << endl;
+                cout << "TITAN needs the mapset to be in UTM coordinates." << endl;
+                cout << "Consider using \"gdalwarp\" to transform." << endl;
+                cout << "Authority code is " << oSRS->GetAuthorityCode(NULL) << endl;
+                cout << "If you sure about the coordinate system" << "change ZONE to something other than zero" << endl;
+                return (-4);
+            }
         }
     }
     else
